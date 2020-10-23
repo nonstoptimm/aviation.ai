@@ -1,5 +1,9 @@
-import logging
 import pandas as pd
+from datetime import datetime
+from datetime import timedelta
+import logging
+import matplotlib.pyplot as plt
+import sys
 
 def clean_data(df):
     _df = df.copy()
@@ -46,6 +50,39 @@ def detect_dates(df):
     for index, row in _df.iterrows():
         date_list.append(datetime.strptime(row['Date'], '%d-%b-%y').date().strftime('%Y-%m-%d'))
     _df['Date'] = date_list
+    return _df
+
+def get_time_delta(df):
+    _df = df.copy()
+    deltas = []
+    for index, row in _df.iterrows():
+        tdelta = datetime.strptime(row['ATA'], '%H:%M') - datetime.strptime(row['ETA'], '%H:%M')
+        if datetime.strptime(row['ATA'], '%H:%M') < datetime.strptime(row['ETA'], '%H:%M'):
+            deltas.append(-1 * int((datetime.strptime('00:00', '%H:%M') - tdelta).time().minute))
+        else:
+            deltas.append(int((datetime.strptime('00:00', '%H:%M') + tdelta).time().minute))
+    _df['Timedelta'] = deltas
+    return _df
+
+
+def get_departure_groups(df):
+    _df = df.copy()
+    dep_groups = []
+    for index, row in _df.iterrows():
+        if datetime.strptime(row['ETD'], '%H:%M') <= datetime.strptime('07:30', '%H:%M'):
+            dep_groups.append('Red Eye')
+        elif datetime.strptime(row['ETD'], '%H:%M') <= datetime.strptime('12:00', '%H:%M'):
+            dep_groups.append('Morning')
+        elif datetime.strptime(row['ETD'], '%H:%M') <= datetime.strptime('18:00', '%H:%M'):
+            dep_groups.append('Afternoon')
+        elif datetime.strptime(row['ETD'], '%H:%M') <= datetime.strptime('21:30', '%H:%M'):
+            dep_groups.append('Evening')
+        elif datetime.strptime(row['ETD'], '%H:%M') <= datetime.strptime('23:59', '%H:%M'):
+            dep_groups.append('Night')
+        else:
+            dep_groups.append(None)
+            logging.warning('invalid time?')
+    _df['ETD_Group'] = dep_groups
     return _df
 
 carrier = {

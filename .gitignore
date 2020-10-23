@@ -106,4 +106,4 @@ GitHub.sublime-settings
 .history
 
 # Virtual Environment
-.venv/
+.venv/*
