@@ -64,7 +64,6 @@ def get_time_delta(df):
     _df['Timedelta'] = deltas
     return _df
 
-
 def get_departure_groups(df):
     _df = df.copy()
     dep_groups = []
@@ -84,6 +83,15 @@ def get_departure_groups(df):
             logging.warning('invalid time?')
     _df['ETD_Group'] = dep_groups
     return _df
+
+def vote_majority(df):
+    _df = pd.DataFrame()
+    df_filter = df.groupby(['Flight'], as_index=False).max()[['Flight', 'Origin_City', 'Destination_City']]
+    for index, row in df_filter.iterrows():
+        df_temp = df[(df['Flight'] == row['Flight']) & (df['Origin_City'] == row['Origin_City']) & (df['Destination_City'] == row['Destination_City'])]
+        _df = _df.append(df_temp)
+    return _df
+
 
 carrier = {
     'LH': ['Lufthansa', 0],
