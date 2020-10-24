@@ -164,7 +164,19 @@ def correct_flighttimes(df):
     _df = _df[[datetime.strptime(time, '%H:%M') > datetime.strptime('06:30', '%H:%M') for time in list(_df['ATA'])]]
     return _df
 
-
+def add_delayed(df):
+    """
+    Add col Delayed. 0 = punctual, 1 = delayed by more than 10 min
+    """
+    _df = df.copy()
+    delayed = []
+    for index, row in _df.iterrows():
+        if row['Timedelta'] > 10:
+            delayed.append(1)
+        else:
+            delayed.append(0)
+    _df['Delayed'] = delayed
+    return _df
 
 carrier = {
     'LH': ['Lufthansa', 0],
