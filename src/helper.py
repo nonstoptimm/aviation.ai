@@ -105,16 +105,65 @@ def get_departure_groups(df):
     _df['ETD_Group'] = dep_groups
     return _df
 
-def vote_majority(df):
+def vote_majority_flight(df):
+    """
+    Majority vote of flights when they have an unusual leg, so that we only keep the "real" flights
+    """
+    _df = df.copy()
+    flight_filtered = pd.DataFrame()
+    flight_list = list(df.Flight.drop_duplicates())
+    logging.warning(f'Loaded {len(flight_list)} flights.')
+    # Loop through flight list and find major flight
+    for flight in flight_list:
+        _flight = _df[(_df['Flight'] == flight)].groupby(['Flight', 'Origin_City', 'Destination_City']).describe().sort_values(('Timedelta', 'count'), ascending=False).reset_index()[['Flight', 'Origin_City', 'Destination_City']].head(1)
+        flight_filtered = flight_filtered.append(_flight)
+    flight_filtered = flight_filtered.reset_index(drop=True).droplevel(0, axis=1)
+    flight_filtered.columns = ['Flight', 'Origin_City', 'Destination_City']
+    return flight_filtered
+
+def extract_major_flight(flight_filtered, df):
     """
     Majority vote of flights when they have an unusual leg, so that we only keep the "real" flights
     """
     _df = pd.DataFrame()
-    df_filter = df.groupby(['Flight'], as_index=False).max()[['Flight', 'Origin_City', 'Destination_City']]
-    for index, row in df_filter.iterrows():
+    for index, row in flight_filtered.iterrows():
         df_temp = df[(df['Flight'] == row['Flight']) & (df['Origin_City'] == row['Origin_City']) & (df['Destination_City'] == row['Destination_City'])]
         _df = _df.append(df_temp)
     return _df
+
+def correct_flighttimes(df):
+    _df = df.copy()
+    ATA = []
+    ETA = []
+    ETD = []
+    ATD = []
+    for index, row in _df.iterrows():
+        if row['Destination_City'] in ['Dublin', 'London']:
+            ATA.append((datetime.strptime(row['ATA'], '%H:%M') + timedelta(hours = 1)).strftime('%H:%M'))
+            ETA.append((datetime.strptime(row['ETA'], '%H:%M') + timedelta(hours = 1)).strftime('%H:%M'))
+        elif row['Destination_City'] == "Addis Ababa":
+            ATA.append((datetime.strptime(row['ATA'], '%H:%M') - timedelta(hours = 1)).strftime('%H:%M'))
+            ETA.append((datetime.strptime(row['ETA'], '%H:%M') - timedelta(hours = 1)).strftime('%H:%M'))
+        else:
+            ATA.append(row['ATA'])
+            ETA.append(row['ETA'])
+        if row['Origin_City'] in ['Dublin', 'London']:
+            ETD.append((datetime.strptime(row['ETD'], '%H:%M') - timedelta(hours = 1)).strftime('%H:%M'))
+            ATD.append((datetime.strptime(row['ATD'], '%H:%M') - timedelta(hours = 1)).strftime('%H:%M'))
+        elif row['Destination_City'] == "Addis Ababa":
+            ETD.append((datetime.strptime(row['ETD'], '%H:%M') + timedelta(hours = 1)).strftime('%H:%M'))
+            ATD.append((datetime.strptime(row['ATD'], '%H:%M') + timedelta(hours = 1)).strftime('%H:%M'))
+        else:
+            ETD.append(row['ETD'])
+            ATD.append(row['ATD'])
+    _df['ATA'] = ATA
+    _df['ETA'] = ETA
+    _df['ETD'] = ETD
+    _df['ATD'] = ATD
+    # Kick out useless 
+    _df = _df[[datetime.strptime(time, '%H:%M') > datetime.strptime('06:30', '%H:%M') for time in list(_df['ATA'])]]
+    return _df
+
 
 
 carrier = {
