@@ -6,6 +6,9 @@ import matplotlib.pyplot as plt
 import sys
 
 def clean_data(df):
+    """
+    Clean data rows, such as invalid characters, NaN, Landed ...
+    """
     _df = df.copy()
     logging.warning(f'Received df of len {len(_df)}...')
     for _ in ['Origin', 'Destination', 'Equipment']:
@@ -19,6 +22,9 @@ def clean_data(df):
     return _df
 
 def clean_codes(df):
+    """
+    Clean airport and equipment codes
+    """
     _df = df.copy()
     for _ in ['Origin', 'Destination']:
         _df[[f'{_}_City', f'{_}_Code']] = _df[_].str.split(u"\xa0\(", n = 1, expand = True)
@@ -28,6 +34,9 @@ def clean_codes(df):
     return _df[['Flight', 'Date', 'Equipment_Type', 'Equipment_Reg', 'Origin_City', 'Origin_Code', 'Destination_City', 'Destination_Code', 'Flight Time', 'ETD', 'ETA', 'ATD', 'ATA']]
 
 def get_carrier_code(df):
+    """
+    Get carrier codes
+    """
     _df = df.copy()
     carrier = {}
     carrier_list = []
@@ -38,6 +47,9 @@ def get_carrier_code(df):
     return carrier, carrier_list
 
 def set_carrier_info(df, carrier, carrier_class, carrier_list):
+    """
+    Assign airlines names + class
+    """
     _df = df.copy()
     _df['Carrier_Name'] = carrier_list
     _df['Carrier_Name'] = _df['Carrier_Name'].map(carrier)
@@ -45,6 +57,9 @@ def set_carrier_info(df, carrier, carrier_class, carrier_list):
     return _df
 
 def detect_dates(df):
+    """
+    Detect dates and reformat it
+    """
     _df = df.copy()
     date_list = []
     for index, row in _df.iterrows():
@@ -53,6 +68,9 @@ def detect_dates(df):
     return _df
 
 def get_time_delta(df):
+    """
+    Calculate time deltas
+    """
     _df = df.copy()
     deltas = []
     for index, row in _df.iterrows():
@@ -65,6 +83,9 @@ def get_time_delta(df):
     return _df
 
 def get_departure_groups(df):
+    """
+    Detect different departure groups throughout the day
+    """
     _df = df.copy()
     dep_groups = []
     for index, row in _df.iterrows():
@@ -85,6 +106,9 @@ def get_departure_groups(df):
     return _df
 
 def vote_majority(df):
+    """
+    Majority vote of flights when they have an unusual leg, so that we only keep the "real" flights
+    """
     _df = pd.DataFrame()
     df_filter = df.groupby(['Flight'], as_index=False).max()[['Flight', 'Origin_City', 'Destination_City']]
     for index, row in df_filter.iterrows():
