@@ -108,3 +108,7 @@ GitHub.sublime-settings
 
 # Virtual Environment
 .venv/*
+
+# Assets
+assets/*.txt
+assets/*.xlsx
