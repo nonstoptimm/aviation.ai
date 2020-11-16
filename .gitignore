@@ -110,5 +110,4 @@ GitHub.sublime-settings
 .venv/*
 
 # Assets
-assets/*.txt
-assets/*.xlsx
+assets/data*
