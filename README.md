@@ -15,4 +15,4 @@ Tasks are going to be tracked via the project
 # Contributors
 - [@nonstoptimm](https://github.com/nonstoptimm)
 - [@lukasvoege](https://github.com/lukasvoege)
-- [@martinmuelle](https://github.com/martinmuelle)
+- [@muelerma](https://github.com/muelerma)
